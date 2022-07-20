@@ -28,6 +28,10 @@ function App() {
     const [status, setStatus] = useState(null);
     const [taskDetails, setTaskDetails] = useState(null);
 
+    const axiosInstance = axios.create({
+        baseURL: process.env.REACT_APP_API_URL,
+    });
+
     useEffect(() => {
         setCode(defaultCode[language]);
     }, [language]);
@@ -50,7 +54,7 @@ function App() {
             setStatus(null);
             setTaskId(null);
             setTaskDetails(null);
-            const { data } = await axios.get("http://localhost:5000/api/run", {
+            const { data } = await axiosInstance.get("/run", {
                 params: {
                     language,
                     code,
@@ -63,8 +67,8 @@ function App() {
 
                 // poll here
                 pollInterval = setInterval(async () => {
-                    const { data: statusRes } = await axios.get(
-                        `http://localhost:5000/api/status`,
+                    const { data: statusRes } = await axiosInstance.get(
+                        `/status`,
                         {
                             params: {
                                 id: data.taskId,
