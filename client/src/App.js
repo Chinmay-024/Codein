@@ -40,20 +40,23 @@ function App() {
     let pollInterval;
 
     const handleSubmit = async () => {
-        const payload = {
-            language,
-            code,
-            input,
-        };
+        // const payload = {
+        //     language,
+        //     code,
+        //     input,
+        // };
         try {
             setOutput("");
             setStatus(null);
             setTaskId(null);
             setTaskDetails(null);
-            const { data } = await axios.post(
-                "http://20.204.14.46:5000/run",
-                payload
-            );
+            const { data } = await axios.get("http://localhost:5000/api/run", {
+                params: {
+                    language,
+                    code,
+                    input,
+                },
+            });
             if (data.taskId) {
                 setTaskId(data.taskId);
                 setStatus("Submitted.");
@@ -61,7 +64,7 @@ function App() {
                 // poll here
                 pollInterval = setInterval(async () => {
                     const { data: statusRes } = await axios.get(
-                        `http://20.204.14.46:5000/status`,
+                        `http://localhost:5000/api/status`,
                         {
                             params: {
                                 id: data.taskId,

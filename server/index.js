@@ -32,9 +32,8 @@ app.use(express.json());
 
 app.use(compression());
 
-app.post("/run", async (req, res) => {
-    const { language = "cpp", code, input } = req.body;
-    console.log(language, "Length:", code.length);
+app.get("/api/run", async (req, res) => {
+    const { language = "cpp", code, input } = req.query;
 
     if (code === undefined) {
         return res
@@ -52,7 +51,7 @@ app.post("/run", async (req, res) => {
     res.status(201).json({ taskId });
 });
 
-app.get("/status", async (req, res) => {
+app.get("/api/status", async (req, res) => {
     const taskId = req.query.id;
 
     if (taskId === undefined) {
