@@ -8,6 +8,7 @@ const taskQueue = new Queue("task-runner-queue");
 const NUM_WORKERS = 10;
 
 taskQueue.process(NUM_WORKERS, async ({ data }) => {
+    console.log("task running");
     const taskId = data.id;
     const task = await Task.findById(taskId);
     if (task === undefined) {

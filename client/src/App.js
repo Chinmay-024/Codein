@@ -44,6 +44,7 @@ function App() {
     let pollInterval;
 
     const handleSubmit = async () => {
+        console.log(process.env);
         // const payload = {
         //     language,
         //     code,
