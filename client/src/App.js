@@ -44,24 +44,19 @@ function App() {
     let pollInterval;
 
     const handleSubmit = async () => {
-        console.log(process.env);
-        // const payload = {
-        //     language,
-        //     code,
-        //     input,
-        // };
+        // console.log(process.env);
+        const payload = {
+            language,
+            code,
+            input,
+        };
+        // console.log(payload);
         try {
             setOutput("");
             setStatus(null);
             setTaskId(null);
             setTaskDetails(null);
-            const { data } = await axiosInstance.get("/run", {
-                params: {
-                    language,
-                    code,
-                    input,
-                },
-            });
+            const { data } = await axiosInstance.post("/run", payload);
             if (data.taskId) {
                 setTaskId(data.taskId);
                 setStatus("Submitted.");
@@ -77,17 +72,50 @@ function App() {
                         }
                     );
                     const { success, task, error } = statusRes;
-                    console.log(statusRes);
+                    // console.log(statusRes);
                     if (success) {
                         const { status: taskStatus, output: taskOutput } = task;
                         setStatus(taskStatus);
                         setTaskDetails(task);
                         if (taskStatus === "pending") return;
-                        setOutput(taskOutput);
+                        if (taskStatus === "error") {
+                            let e = JSON.parse(taskOutput);
+                            if (e.stderr === "")
+                                setOutput(
+                                    "Time Limit Exceeded. Check input and code"
+                                );
+                            else {
+                                if (
+                                    language === "cpp" ||
+                                    language === "c" ||
+                                    language === "java"
+                                ) {
+                                    if (e.stderr.includes("error")) {
+                                        let y = e.stderr.indexOf("error") + 5;
+                                        setOutput(e.stderr.substring(y));
+                                    } else {
+                                        setOutput(
+                                            "Compilation or Runtime Error"
+                                        );
+                                    }
+                                } else if (language === "py") {
+                                    if (e.stderr.includes(`.py`)) {
+                                        let y = e.stderr.indexOf(`.py`) + 6;
+                                        setOutput(e.stderr.substring(y));
+                                    } else {
+                                        setOutput(
+                                            "Compilation or Runtime Error"
+                                        );
+                                    }
+                                } else setOutput(e.stderr);
+                            }
+                        } else {
+                            setOutput(taskOutput);
+                        }
                         clearInterval(pollInterval);
                     } else {
                         console.error(error);
-                        setOutput(JSON.stringify(error.stderr));
+                        setOutput(JSON.stringify(error));
                         setStatus("Bad request");
                         clearInterval(pollInterval);
                     }
@@ -97,7 +125,7 @@ function App() {
             }
         } catch ({ response }) {
             if (response) {
-                const errMsg = response.data.err.stderr;
+                const errMsg = response.data;
                 setOutput(errMsg);
             } else {
                 setOutput("Please retry submitting.");
@@ -107,7 +135,7 @@ function App() {
 
     const setDefaultLanguage = () => {
         localStorage.setItem("default-language", language);
-        console.log(`${language} set as default!`);
+        // console.log(`${language} set as default!`);
     };
 
     const renderTimeDetails = () => {
@@ -177,7 +205,9 @@ function App() {
                             >
                                 <MenuItem value='cpp'>C++</MenuItem>
                                 <MenuItem value='py'>Python</MenuItem>
+                                <MenuItem value='c'>C</MenuItem>
                                 <MenuItem value='java'>Java</MenuItem>
+                                <MenuItem value='js'>JavaScript</MenuItem>
                             </Select>
                         </FormControl>
                         <div />

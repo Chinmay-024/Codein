@@ -8,31 +8,29 @@ if (!fs.existsSync(outputPath)) {
     fs.mkdirSync(outputPath, { recursive: true });
 }
 
-const executePy = (filepath, inputpath) => {
+const executeJS = (filepath, inputpath) => {
     const codeId = path.basename(filepath).split(".")[0];
+    const outPath = path.join(outputPath, `${codeId}.out`);
 
     return new Promise(async (resolve, reject) => {
-        if (inputpath === undefined || inputpath === "") {
-            exec(`timeout 5s python ${filepath}`, (error, stdout, stderr) => {
+        if (inputpath === undefined || inputpath === undefined) {
+            exec(`node ${filepath}`, (error, stdout, stderr) => {
                 error && reject({ error, stderr });
                 stderr && reject(stderr);
                 resolve(stdout);
             });
         } else {
             console.log(inputpath);
-            console.log(` python ${filepath} < ${inputpath}`);
-            exec(
-                `timeout 5s python ${filepath} < ${inputpath}`,
-                (error, stdout, stderr) => {
-                    error && reject({ error, stderr });
-                    stderr && reject(stderr);
-                    resolve(stdout);
-                }
-            );
+            console.log(`timeout 3s node ${filepath} < ${inputpath}`);
+            exec(`node ${filepath} < ${inputpath}`, (error, stdout, stderr) => {
+                error && reject({ error, stderr });
+                stderr && reject(stderr);
+                resolve(stdout);
+            });
         }
     });
 };
 
 module.exports = {
-    executePy,
+    executeJS,
 };

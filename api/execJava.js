@@ -8,21 +8,23 @@ if (!fs.existsSync(outputPath)) {
     fs.mkdirSync(outputPath, { recursive: true });
 }
 
-const executePy = (filepath, inputpath) => {
+const executeJava = (filepath, inputpath) => {
     const codeId = path.basename(filepath).split(".")[0];
+    const outPath = outputPath;
 
     return new Promise(async (resolve, reject) => {
-        if (inputpath === undefined || inputpath === "") {
-            exec(`timeout 5s python ${filepath}`, (error, stdout, stderr) => {
-                error && reject({ error, stderr });
-                stderr && reject(stderr);
-                resolve(stdout);
-            });
-        } else {
-            console.log(inputpath);
-            console.log(` python ${filepath} < ${inputpath}`);
+        if (inputpath === undefined) {
             exec(
-                `timeout 5s python ${filepath} < ${inputpath}`,
+                `javac -d ${outPath} ${filepath} && timeout 20s java -cp ${outPath} Main`,
+                (error, stdout, stderr) => {
+                    error && reject({ error, stderr });
+                    stderr && reject(stderr);
+                    resolve(stdout);
+                }
+            );
+        } else {
+            exec(
+                `javac -d ${outPath} ${filepath} && timeout 20s java -cp ${outPath} Main < ${inputpath}`,
                 (error, stdout, stderr) => {
                     error && reject({ error, stderr });
                     stderr && reject(stderr);
@@ -34,5 +36,5 @@ const executePy = (filepath, inputpath) => {
 };
 
 module.exports = {
-    executePy,
+    executeJava,
 };

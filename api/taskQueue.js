@@ -3,6 +3,9 @@ const Queue = require("bull");
 const Task = require("./models/taskModel");
 const { executeCpp } = require("./execCpp");
 const { executePy } = require("./execPy");
+const { executeC } = require("./execC");
+const { executeJava } = require("./execJava");
+const { executeJS } = require("./execJS");
 
 const taskQueue = new Queue("task-runner-queue");
 const NUM_WORKERS = 10;
@@ -20,7 +23,13 @@ taskQueue.process(NUM_WORKERS, async ({ data }) => {
         if (task.language === "cpp") {
             output = await executeCpp(task.filepath, task.inputpath);
         } else if (task.language === "py") {
-            output = await executePy(task.filepath);
+            output = await executePy(task.filepath, task.inputpath);
+        } else if (task.language === "c") {
+            output = await executeC(task.filepath, task.inputpath);
+        } else if (task.language === "java") {
+            output = await executeJava(task.filepath, task.inputpath);
+        } else if (task.language === "js") {
+            output = await executeJS(task.filepath, task.inputpath);
         }
         task["completedAt"] = new Date();
         task["output"] = output;

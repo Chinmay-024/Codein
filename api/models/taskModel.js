@@ -4,7 +4,7 @@ const TaskSchema = mongoose.Schema({
     language: {
         type: String,
         required: true,
-        enum: ["cpp", "py"],
+        enum: ["cpp", "py", "java", "c", "js"],
     },
     filepath: {
         type: String,

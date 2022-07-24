@@ -17,14 +17,16 @@ const generateFile = async (format, content, input) => {
     const filename = `${codeId}.${format}`;
     const filepath = path.join(codeDir, filename);
     let inputpath;
-    if (input === undefined) {
-        inputpath = "";
+    if (input === undefined || input === "") {
+        inputpath = undefined;
     } else {
+        console.log(input);
         const inputname = `${codeId}.txt`;
         inputpath = path.join(inputDir, inputname);
+        console.log(input);
+        await fs.writeFileSync(inputpath, input);
     }
 
-    await fs.writeFileSync(inputpath, input);
     await fs.writeFileSync(filepath, content);
     return { filepath, inputpath };
 };

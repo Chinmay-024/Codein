@@ -32,8 +32,9 @@ app.use(express.json());
 
 app.use(compression());
 
-app.get("/api/run", async (req, res) => {
-    const { language = "cpp", code, input } = req.query;
+app.post("/api/run", async (req, res) => {
+    // console.log("HI");
+    const { language = "cpp", code, input } = req.body;
 
     if (code === undefined) {
         return res
