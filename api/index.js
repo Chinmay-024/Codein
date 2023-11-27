@@ -12,15 +12,15 @@ const app = express();
 dotenv.config({ path: "./config.env" });
 
 mongoose.connect(
-    process.env.DATABASE,
-    {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    },
-    (err) => {
-        err && console.error(err);
-        console.log("Successfully connected to MongoDB: compilerdb");
-    }
+  process.env.DATABASE,
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  },
+  (err) => {
+    err && console.error(err);
+    console.log("Successfully connected to MongoDB: CodeinDB");
+  }
 );
 
 // Implement CORS
@@ -33,47 +33,44 @@ app.use(express.json());
 app.use(compression());
 
 app.post("/api/run", async (req, res) => {
-    // console.log("HI");
-    const { language = "cpp", code, input } = req.body;
+  const { language = "cpp", code, input } = req.body;
 
-    if (code === undefined) {
-        return res
-            .status(400)
-            .json({ success: false, error: "Empty code body!" });
-    }
+  if (code === undefined) {
+    return res.status(400).json({ success: false, error: "Empty code body!" });
+  }
 
-    // need to generate a c++ file with content from the request
-    const { filepath, inputpath } = await generateFile(language, code, input);
+  // need to generate a c++ file with content from the request
+  const { filepath, inputpath } = await generateFile(language, code, input);
 
-    // write into DB
-    const task = await new Task({ language, filepath, inputpath }).save();
-    const taskId = task["_id"];
-    addTaskToQueue(taskId);
-    res.status(201).json({ taskId });
+  // write into DB
+  const task = await new Task({ language, filepath, inputpath }).save();
+  const taskId = task["_id"];
+  addTaskToQueue(taskId);
+  res.status(201).json({ taskId });
 });
 
 app.get("/api/status", async (req, res) => {
-    const taskId = req.query.id;
+  const taskId = req.query.id;
 
-    if (taskId === undefined) {
-        return res
-            .status(400)
-            .json({ success: false, error: "missing id query param" });
-    }
+  if (taskId === undefined) {
+    return res
+      .status(400)
+      .json({ success: false, error: "missing id query param" });
+  }
 
-    const task = await Task.findById(taskId);
+  const task = await Task.findById(taskId);
 
-    if (task === undefined) {
-        return res
-            .status(400)
-            .json({ success: false, error: "couldn't find task" });
-    }
+  if (task === undefined) {
+    return res
+      .status(400)
+      .json({ success: false, error: "couldn't find task" });
+  }
 
-    return res.status(200).json({ success: true, task });
+  return res.status(200).json({ success: true, task });
 });
 
 const port = process.env.PORT || 5000;
 
 const server = app.listen(port, () => {
-    console.log(`App running on port ${port}...`);
+  console.log(`App running on port ${port}...`);
 });

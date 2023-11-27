@@ -20,280 +20,261 @@ import "ace-builds/src-noconflict/theme-tomorrow";
 import "ace-builds/src-noconflict/ext-language_tools";
 
 function App() {
-    const [code, setCode] = useState("");
-    const [input, setInput] = useState("");
-    const [output, setOutput] = useState("");
-    const [language, setLanguage] = useState("cpp");
-    const [taskId, setTaskId] = useState(null);
-    const [status, setStatus] = useState(null);
-    const [taskDetails, setTaskDetails] = useState(null);
+  const [code, setCode] = useState("");
+  const [input, setInput] = useState("");
+  const [output, setOutput] = useState("");
+  const [language, setLanguage] = useState("cpp");
+  const [taskId, setTaskId] = useState(null);
+  const [status, setStatus] = useState(null);
+  const [taskDetails, setTaskDetails] = useState(null);
 
-    const axiosInstance = axios.create({
-        baseURL: process.env.REACT_APP_API_URL,
-    });
+  const axiosInstance = axios.create({
+    baseURL: process.env.REACT_APP_API_URL,
+  });
 
-    useEffect(() => {
-        setCode(defaultCode[language]);
-    }, [language]);
+  useEffect(() => {
+    setCode(defaultCode[language]);
+  }, [language]);
 
-    useEffect(() => {
-        const defaultLang = localStorage.getItem("default-language") || "cpp";
-        setLanguage(defaultLang);
-    }, []);
+  useEffect(() => {
+    const defaultLang = localStorage.getItem("default-language") || "cpp";
+    setLanguage(defaultLang);
+  }, []);
 
-    let pollInterval;
+  let pollInterval;
 
-    const handleSubmit = async () => {
-        // console.log(process.env);
-        const payload = {
-            language,
-            code,
-            input,
-        };
-        // console.log(payload);
-        try {
-            setOutput("");
-            setStatus(null);
-            setTaskId(null);
-            setTaskDetails(null);
-            const { data } = await axiosInstance.post("/run", payload);
-            if (data.taskId) {
-                setTaskId(data.taskId);
-                setStatus("Submitted.");
+  const handleSubmit = async () => {
+    const payload = {
+      language,
+      code,
+      input,
+    };
+    try {
+      setOutput("");
+      setStatus(null);
+      setTaskId(null);
+      setTaskDetails(null);
+      const { data } = await axiosInstance.post("/run", payload);
+      if (data.taskId) {
+        setTaskId(data.taskId);
+        setStatus("Submitted.");
 
-                // poll here
-                pollInterval = setInterval(async () => {
-                    const { data: statusRes } = await axiosInstance.get(
-                        `/status`,
-                        {
-                            params: {
-                                id: data.taskId,
-                            },
-                        }
-                    );
-                    const { success, task, error } = statusRes;
-                    // console.log(statusRes);
-                    if (success) {
-                        const { status: taskStatus, output: taskOutput } = task;
-                        setStatus(taskStatus);
-                        setTaskDetails(task);
-                        if (taskStatus === "pending") return;
-                        if (taskStatus === "error") {
-                            let e = JSON.parse(taskOutput);
-                            if (e.stderr === "")
-                                setOutput(
-                                    "Time Limit Exceeded. Check input and code"
-                                );
-                            else {
-                                if (
-                                    language === "cpp" ||
-                                    language === "c" ||
-                                    language === "java"
-                                ) {
-                                    if (e.stderr.includes("error")) {
-                                        let y = e.stderr.indexOf("error") + 5;
-                                        setOutput(e.stderr.substring(y));
-                                    } else {
-                                        setOutput(
-                                            "Compilation or Runtime Error"
-                                        );
-                                    }
-                                } else if (language === "py") {
-                                    if (e.stderr.includes(`.py`)) {
-                                        let y = e.stderr.indexOf(`.py`) + 6;
-                                        setOutput(e.stderr.substring(y));
-                                    } else {
-                                        setOutput(
-                                            "Compilation or Runtime Error"
-                                        );
-                                    }
-                                } else setOutput(e.stderr);
-                            }
-                        } else {
-                            setOutput(taskOutput);
-                        }
-                        clearInterval(pollInterval);
-                    } else {
-                        console.error(error);
-                        setOutput(JSON.stringify(error));
-                        setStatus("Bad request");
-                        clearInterval(pollInterval);
-                    }
-                }, 1000);
+        // poll here
+        pollInterval = setInterval(async () => {
+          const { data: statusRes } = await axiosInstance.get(`/status`, {
+            params: {
+              id: data.taskId,
+            },
+          });
+          const { success, task, error } = statusRes;
+          if (success) {
+            const { status: taskStatus, output: taskOutput } = task;
+            setStatus(taskStatus);
+            setTaskDetails(task);
+            if (taskStatus === "pending") return;
+            if (taskStatus === "error") {
+              let e = JSON.parse(taskOutput);
+              if (e.stderr === "")
+                setOutput("Time Limit Exceeded. Check input and code");
+              else {
+                if (
+                  language === "cpp" ||
+                  language === "c" ||
+                  language === "java"
+                ) {
+                  if (e.stderr.includes("error")) {
+                    let y = e.stderr.indexOf("error") + 5;
+                    setOutput(e.stderr.substring(y));
+                  } else {
+                    setOutput("Compilation or Runtime Error");
+                  }
+                } else if (language === "py") {
+                  if (e.stderr.includes(`.py`)) {
+                    let y = e.stderr.indexOf(`.py`) + 6;
+                    setOutput(e.stderr.substring(y));
+                  } else {
+                    setOutput("Compilation or Runtime Error");
+                  }
+                } else setOutput(e.stderr);
+              }
             } else {
-                setOutput("Retry again.");
+              setOutput(taskOutput);
             }
-        } catch ({ response }) {
-            if (response) {
-                const errMsg = response.data;
-                setOutput(errMsg);
-            } else {
-                setOutput("Please retry submitting.");
-            }
-        }
-    };
+            clearInterval(pollInterval);
+          } else {
+            console.error(error);
+            setOutput(JSON.stringify(error));
+            setStatus("Bad request");
+            clearInterval(pollInterval);
+          }
+        }, 1000);
+      } else {
+        setOutput("Retry again.");
+      }
+    } catch ({ response }) {
+      if (response) {
+        const errMsg = response.data;
+        setOutput(errMsg);
+      } else {
+        setOutput("Please retry submitting.");
+      }
+    }
+  };
 
-    const setDefaultLanguage = () => {
-        localStorage.setItem("default-language", language);
-        // console.log(`${language} set as default!`);
-    };
+  const setDefaultLanguage = () => {
+    localStorage.setItem("default-language", language);
+  };
 
-    const renderTimeDetails = () => {
-        if (!taskDetails) {
-            return "";
-        }
-        let { submittedAt, startedAt, completedAt } = taskDetails;
-        let result;
-        submittedAt = moment(submittedAt).toString();
-        if (startedAt && completedAt) {
-            const start = moment(startedAt);
-            const end = moment(completedAt);
-            const diff = end.diff(start, "seconds", true);
-            result = (
-                <>
-                    <p>
-                        <span className='state'> Execution Time </span>
-                        {diff} sec
-                    </p>
-                    <p>
-                        <span className='state'> Task Submitted At </span>
-                        {submittedAt}
-                    </p>
-                </>
-            );
-            return result;
-        }
-        result = (
-            <p>
-                <span className='state'> Task Submitted At </span>
-                {submittedAt}
-            </p>
-        );
-        return result;
-    };
-
-    return (
+  const renderTimeDetails = () => {
+    if (!taskDetails) {
+      return "";
+    }
+    let { submittedAt, startedAt, completedAt } = taskDetails;
+    let result;
+    submittedAt = moment(submittedAt).toString();
+    if (startedAt && completedAt) {
+      const start = moment(startedAt);
+      const end = moment(completedAt);
+      const diff = end.diff(start, "seconds", true);
+      result = (
         <>
-            <div className='App'>
-                <div className='App-logo'>
-                    {/* <h1>CODEIN</h1> */}
-                    <img
-                        className='image'
-                        src={require("./logo3.png")}
-                        alt='CODEIN'
-                    />
-                </div>
-                <div className='head'>
-                    <div className='form'>
-                        <FormControl variant='standard' fullWidth>
-                            <InputLabel id='demo-simple-select-label'>
-                                Language
-                            </InputLabel>
-                            <Select
-                                labelId='demo-simple-select-label'
-                                id='demo-simple-select'
-                                value={language}
-                                label='Language'
-                                onChange={(e) => {
-                                    const shouldSwitch = window.confirm(
-                                        "Are you sure you want to change language? WARNING: Your current code will be lost."
-                                    );
-                                    if (shouldSwitch) {
-                                        setLanguage(e.target.value);
-                                    }
-                                }}
-                            >
-                                <MenuItem value='cpp'>C++</MenuItem>
-                                <MenuItem value='py'>Python</MenuItem>
-                                <MenuItem value='c'>C</MenuItem>
-                                <MenuItem value='java'>Java</MenuItem>
-                                <MenuItem value='js'>JavaScript</MenuItem>
-                            </Select>
-                        </FormControl>
-                        <div />
-                        <br />
-                    </div>
-                    <Button
-                        onClick={setDefaultLanguage}
-                        className='fillIcon'
-                        variant='contained'
-                        color='secondary'
-                    >
-                        Set Default
-                    </Button>
-                </div>
-                <br />
-                <div className='editor'>
-                    <AceEditor
-                        mode='java'
-                        value={code}
-                        theme='tomorrow'
-                        width='100%'
-                        fontSize='15px'
-                        onChange={(e) => {
-                            setCode(e);
-                        }}
-                        // name='UNIQUE_ID_OF_DIV'
-                        editorProps={{ $blockScrolling: true }}
-                        setOptions={{
-                            enableBasicAutocompletion: true,
-                            enableLiveAutocompletion: true,
-                            enableSnippets: true,
-                        }}
-                    />
-                </div>
-                <br />
-                <div className='centre'>
-                    <MDBInput
-                        type='textarea'
-                        label='Input'
-                        rows='5'
-                        cols='50'
-                        value={input}
-                        onChange={(e) => {
-                            setInput(e.target.value);
-                        }}
-                    />
-                </div>
-                <br />
-                <Button
-                    onClick={handleSubmit}
-                    className='fillIcon'
-                    variant='contained'
-                    color='secondary'
-                >
-                    Submit
-                </Button>
-                <br />
-                <br />
-                {status && (
-                    <div className='output'>
-                        <div className='outputflex'>
-                            {status && (
-                                <p>
-                                    <span className='state'>Status </span>
-                                    {status}
-                                </p>
-                            )}
-                            {taskId && (
-                                <p>
-                                    <span className='state'> Task ID </span>
-                                    {taskId}
-                                </p>
-                            )}
-                            {renderTimeDetails()}
-                        </div>
-                        {output && (
-                            <p>
-                                <span className='state'>Output </span>
-                                {output}
-                            </p>
-                        )}
-                    </div>
-                )}
-            </div>
+          <p>
+            <span className="state"> Execution Time </span>
+            {diff} sec
+          </p>
+          <p>
+            <span className="state"> Task Submitted At </span>
+            {submittedAt}
+          </p>
         </>
+      );
+      return result;
+    }
+    result = (
+      <p>
+        <span className="state"> Task Submitted At </span>
+        {submittedAt}
+      </p>
     );
+    return result;
+  };
+
+  return (
+    <>
+      <div className="App">
+        <div className="App-logo">
+          {/* <h1>CODEIN</h1> */}
+          <img className="image" src={require("./logo3.png")} alt="CODEIN" />
+        </div>
+        <div className="head">
+          <div className="form">
+            <FormControl variant="standard" fullWidth>
+              <InputLabel id="demo-simple-select-label">Language</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={language}
+                label="Language"
+                onChange={(e) => {
+                  const shouldSwitch = window.confirm(
+                    "Are you sure you want to change language? WARNING: Your current code will be lost."
+                  );
+                  if (shouldSwitch) {
+                    setLanguage(e.target.value);
+                  }
+                }}
+              >
+                <MenuItem value="cpp">C++</MenuItem>
+                <MenuItem value="py">Python</MenuItem>
+                <MenuItem value="c">C</MenuItem>
+                <MenuItem value="java">Java</MenuItem>
+                <MenuItem value="js">JavaScript</MenuItem>
+              </Select>
+            </FormControl>
+            <div />
+            <br />
+          </div>
+          <Button
+            onClick={setDefaultLanguage}
+            className="fillIcon"
+            variant="contained"
+            color="secondary"
+          >
+            Set Default
+          </Button>
+        </div>
+        <br />
+        <div className="editor">
+          <AceEditor
+            mode="java"
+            value={code}
+            theme="tomorrow"
+            width="100%"
+            fontSize="15px"
+            onChange={(e) => {
+              setCode(e);
+            }}
+            // name='UNIQUE_ID_OF_DIV'
+            editorProps={{ $blockScrolling: true }}
+            setOptions={{
+              enableBasicAutocompletion: true,
+              enableLiveAutocompletion: true,
+              enableSnippets: true,
+            }}
+          />
+        </div>
+        <br />
+        <div className="centre">
+          <MDBInput
+            type="textarea"
+            label="Input"
+            rows="5"
+            cols="50"
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+            }}
+          />
+        </div>
+        <br />
+        <Button
+          onClick={handleSubmit}
+          className="fillIcon"
+          variant="contained"
+          color="secondary"
+        >
+          Submit
+        </Button>
+        <br />
+        <br />
+        {status && (
+          <div className="output">
+            <div className="outputflex">
+              {status && (
+                <p>
+                  <span className="state">Status </span>
+                  {status}
+                </p>
+              )}
+              {taskId && (
+                <p>
+                  <span className="state"> Task ID </span>
+                  {taskId}
+                </p>
+              )}
+              {renderTimeDetails()}
+            </div>
+            {output && (
+              <p>
+                <span className="state">Output </span>
+                {output}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 export default App;
