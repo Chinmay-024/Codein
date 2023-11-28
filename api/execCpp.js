@@ -28,7 +28,7 @@ async function executeCpp(codeFilePath, inputpath) {
         AttachStderr: true,
       });
     }
-
+console.log("Running");
     await container.start();
 
     const containerInfo = await container.inspect();

@@ -22,7 +22,8 @@ taskQueue.process(NUM_WORKERS, async ({ data }) => {
     if (task.language === "cpp") {
       output = await executeCpp(task.filepath, task.inputpath);
     } else if (task.language === "py") {
-      output = await executePy(task.filepath, task.inputpath);
+ console.log("python");     
+output = await executePy(task.filepath, task.inputpath);
     } else if (task.language === "c") {
       output = await executeC(task.filepath, task.inputpath);
     } else if (task.language === "java") {

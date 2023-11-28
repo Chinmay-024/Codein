@@ -9,8 +9,9 @@ if (!fs.existsSync(outputPath)) {
 }
 
 const executePy = (filepath, inputpath) => {
-  const codeId = path.basename(filepath).split(".")[0];
-
+ console.log("HI"); 
+const codeId = path.basename(filepath).split(".")[0];
+  console.log(`timeout 5s python ${filepath}`);
   return new Promise(async (resolve, reject) => {
     if (inputpath === undefined || inputpath === "") {
       exec(`timeout 5s python ${filepath}`, (error, stdout, stderr) => {

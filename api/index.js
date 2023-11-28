@@ -34,7 +34,6 @@ app.use(compression());
 
 app.post("/api/run", async (req, res) => {
   const { language = "cpp", code, input } = req.body;
-
   if (code === undefined) {
     return res.status(400).json({ success: false, error: "Empty code body!" });
   }
